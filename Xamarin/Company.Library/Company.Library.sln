@@ -1,0 +1,80 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build", "Build", "{8CB8800A-5C63-4DE1-AFA5-4483A9B61F32}"
+	ProjectSection(SolutionItems) = preProject
+		Build\Common.tt = Build\Common.tt
+		Build\EnvVS2013.bat = Build\EnvVS2013.bat
+		Build\GenerateNuGetPackages.bat = Build\GenerateNuGetPackages.bat
+		Build\Release.bat = Build\Release.bat
+		Build\TextTransform.bat = Build\TextTransform.bat
+		Build\TextTransform.sh = Build\TextTransform.sh
+		Build\xUnitConsoleRunner.bat = Build\xUnitConsoleRunner.bat
+		Build\xUnitConsoleRunner.sh = Build\xUnitConsoleRunner.sh
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Library", "Library", "{429647AF-198B-40C5-B9F8-903CB7A9FF69}"
+	ProjectSection(SolutionItems) = preProject
+		Company.Library\VersionInfo.xml = Company.Library\VersionInfo.xml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Company.Library", "Company.Library\Portable\Company.Library.csproj", "{3FFA3D20-DA00-4E5B-A1A3-659E616442F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Company.Library.Android", "Company.Library\Android\Company.Library.Android.csproj", "{A9542F8F-E4CF-4FA6-9274-9FDCCFCF0930}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Company.Library.Contracts", "Company.Library\Contracts\Company.Library.Contracts.csproj", "{8DCF7E36-4C22-4920-8CCC-EFD0D5D4E81B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Company.Library.Desktop", "Company.Library\Desktop\Company.Library.Desktop.csproj", "{ECC4DEE7-44C1-4456-A76A-6BCE9A6D2720}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Company.Library.Shared", "Company.Library\Shared\Company.Library.Shared.shproj", "{66D2F2C9-ED9A-4988-B7DC-A3E56FCFF781}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0FA449D5-C01B-473B-B377-0059106C2FC4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Company.Library.Tests.Android", "Company.Library.Tests\Android\Company.Library.Tests.Android.csproj", "{2B894124-9267-43EA-9A58-C459AD4710BC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Company.Library.Tests.Desktop", "Company.Library.Tests\Desktop\Company.Library.Tests.Desktop.csproj", "{5B68BE78-24DC-4C10-B749-05AAD9BF2D75}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Company.Library.Tests.Shared", "Company.Library.Tests\Shared\Company.Library.Tests.Shared.shproj", "{6546A9E7-8AF8-428F-9211-AC48C64F9DE0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2B894124-9267-43EA-9A58-C459AD4710BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B894124-9267-43EA-9A58-C459AD4710BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B894124-9267-43EA-9A58-C459AD4710BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B894124-9267-43EA-9A58-C459AD4710BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FFA3D20-DA00-4E5B-A1A3-659E616442F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FFA3D20-DA00-4E5B-A1A3-659E616442F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FFA3D20-DA00-4E5B-A1A3-659E616442F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FFA3D20-DA00-4E5B-A1A3-659E616442F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B68BE78-24DC-4C10-B749-05AAD9BF2D75}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B68BE78-24DC-4C10-B749-05AAD9BF2D75}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B68BE78-24DC-4C10-B749-05AAD9BF2D75}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B68BE78-24DC-4C10-B749-05AAD9BF2D75}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8DCF7E36-4C22-4920-8CCC-EFD0D5D4E81B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DCF7E36-4C22-4920-8CCC-EFD0D5D4E81B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DCF7E36-4C22-4920-8CCC-EFD0D5D4E81B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DCF7E36-4C22-4920-8CCC-EFD0D5D4E81B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9542F8F-E4CF-4FA6-9274-9FDCCFCF0930}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9542F8F-E4CF-4FA6-9274-9FDCCFCF0930}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9542F8F-E4CF-4FA6-9274-9FDCCFCF0930}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9542F8F-E4CF-4FA6-9274-9FDCCFCF0930}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ECC4DEE7-44C1-4456-A76A-6BCE9A6D2720}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ECC4DEE7-44C1-4456-A76A-6BCE9A6D2720}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ECC4DEE7-44C1-4456-A76A-6BCE9A6D2720}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ECC4DEE7-44C1-4456-A76A-6BCE9A6D2720}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3FFA3D20-DA00-4E5B-A1A3-659E616442F0} = {429647AF-198B-40C5-B9F8-903CB7A9FF69}
+		{A9542F8F-E4CF-4FA6-9274-9FDCCFCF0930} = {429647AF-198B-40C5-B9F8-903CB7A9FF69}
+		{8DCF7E36-4C22-4920-8CCC-EFD0D5D4E81B} = {429647AF-198B-40C5-B9F8-903CB7A9FF69}
+		{ECC4DEE7-44C1-4456-A76A-6BCE9A6D2720} = {429647AF-198B-40C5-B9F8-903CB7A9FF69}
+		{66D2F2C9-ED9A-4988-B7DC-A3E56FCFF781} = {429647AF-198B-40C5-B9F8-903CB7A9FF69}
+		{2B894124-9267-43EA-9A58-C459AD4710BC} = {0FA449D5-C01B-473B-B377-0059106C2FC4}
+		{5B68BE78-24DC-4C10-B749-05AAD9BF2D75} = {0FA449D5-C01B-473B-B377-0059106C2FC4}
+		{6546A9E7-8AF8-428F-9211-AC48C64F9DE0} = {0FA449D5-C01B-473B-B377-0059106C2FC4}
+	EndGlobalSection
+EndGlobal

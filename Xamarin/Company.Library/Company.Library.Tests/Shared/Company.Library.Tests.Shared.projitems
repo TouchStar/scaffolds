@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>{6546A9E7-8AF8-428F-9211-AC48C64F9DE0}</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Company.Library.Tests</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Fixtures\" />
+    <Folder Include="$(MSBuildThisFileDirectory)Helpers\" />
+    <Folder Include="$(MSBuildThisFileDirectory)Mocks\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\MarkovNameGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Tests\Playground.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Tests\SampleTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\TestHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\GlobalAndroid.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Fixtures\LoggingFixture.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\xUnitHelpers.cs" />
+  </ItemGroup>
+</Project>

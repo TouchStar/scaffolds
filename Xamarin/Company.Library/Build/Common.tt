@@ -1,0 +1,365 @@
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Xml" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Diagnostics" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Xml" #>
+<#@ import namespace="System.Xml.Serialization" #>
+<# 
+	string scriptFolder = new FileInfo(Host.TemplateFile).Directory.FullName;
+
+	var    Version = new VersionInfo(); 
+	var    Repo = new RepositoryInfo();
+	var    Build = new BuildInfo();
+	var    Env = new EnvironmentInfo();
+
+	try {		
+		int exitCode;	
+
+			// ---------------------------------------------------------------
+			// Extract Version Info
+		var versionInfoPath = FindFileWalkingUpPathToSolution(scriptFolder, "VersionInfo.xml");
+		if(versionInfoPath != null) {
+			var parser = new XmlSerializer(typeof(VersionInfo));
+			using(var reader = new StreamReader(versionInfoPath)) {
+				Version = (VersionInfo)parser.Deserialize(reader);
+			}	
+		}
+		else {
+			Console.WriteLine("Warning VersionInfo.xml not found");
+		}
+
+			// ---------------------------------------------------------------
+			// Grab BuildNumber from Environment (Bamboo will set this).
+		var buildNumberString = System.Environment.GetEnvironmentVariable("AUTOBUILDNUMBER") ?? String.Empty;
+		Build.IsAuto = !String.IsNullOrEmpty(buildNumberString);
+		int temp;
+		if(int.TryParse(buildNumberString, out temp)) Build.Number = temp;
+
+			// Apply BuildNumber to versionInfo (if not already set).
+		if(Build.Number > 0 && Version.Build != null) Version.Build = Build.Number;			
+
+			// Get BuildDate
+		Build.DateRaw = DateTime.UtcNow;
+		Build.DateUtc = Build.DateRaw.ToString("yyyyMMdd-HHmmss");
+		Build.Date 	  = Build.DateRaw.ToLocalTime().ToString("yyyyMMdd-HHmmss");
+
+			// Get BuildMachine
+		Build.Machine = Environment.MachineName;
+
+			// ---------------------------------------------------------------
+		Repo.Type = GetRepoType();
+
+		if(Repo.Type == RepoType.Git) {
+				// Get Commit SHA - http://stackoverflow.com/a/16579859/1099111
+			Repo.GitCommit = GitCommand("rev-parse HEAD", out exitCode);
+			Repo.GitCommitShort = ShortenSHA1(Repo.GitCommit);
+			if(exitCode == 0) Repo.IsAvailable = true;
+
+				// Git Extract Current Branch
+			Repo.Branch = GitCommand("rev-parse --abbrev-ref HEAD", out exitCode);	
+			if(exitCode != 0) Repo.Branch = String.Empty;
+
+				// Git Parse Pseudo Revision
+			var revString = GitCommand("rev-list --count HEAD");			// Equivalent to SVN rev			
+			int.TryParse(revString, out Repo.Revision);
+
+				// Git Extract Tag Information
+			Repo.Tag = GitCommand("describe --exact-match HEAD", out exitCode);	// Extract Tag on current commit
+			if(exitCode != 0) Repo.Tag = String.Empty;	
+		}
+
+		if(Repo.Type == RepoType.Subversion) {
+			var infoOutput = SvnCommand("info", out exitCode);
+			if(exitCode == 0) Repo.IsAvailable = true;
+
+				// Pull apart info result.
+			infoOutput = System.Text.RegularExpressions.Regex.Replace(infoOutput, @"\r\n|\n\r|\n|\r", "\r\n");
+			var svnVersionData = infoOutput.Split( new string [] {"\r\n"}, StringSplitOptions.None);
+
+				// Svn Revision			
+			var revString = ExtractSubversionInfoValue( svnVersionData.FirstOrDefault(s => s.Contains("Revision:")) );
+			int.TryParse(revString, out Repo.Revision);
+
+				// Svn Branch/Tag detection (Rudimentary but effective - feel free to improve).
+			var url = ExtractSubversionInfoValue( svnVersionData.FirstOrDefault(s => s.Contains("URL:")) );
+			if(url.EndsWith("/")) url = url.Substring(0, url.Length-1);
+			if(url.EndsWith("trunk")) Repo.Branch = "trunk";
+			else {
+				var tagPos = url.LastIndexOf("tags");					
+				var branchPos = url.LastIndexOf("branches");
+
+				if(tagPos >= 0)    		Repo.Tag = url.Substring(tagPos+5);
+				else if(branchPos >= 0) Repo.Branch = url.Substring(branchPos+9);
+			}		
+		}
+	
+			// ---------------------------------------------------------------
+			// Plaform
+		Env.Platform = GetPlatformID().ToString();
+
+			// Xamarin Android Version
+		Env.XamarinAndroidVersion = DetermineXamarinAndroidVersion() ?? String.Empty;		
+
+	} catch(Exception ex) {		
+		Console.WriteLine("Exception {0}", ex.ToString());
+	}
+#>
+<#+
+	static void DisplayBuildInformation(VersionInfo Version, BuildInfo Build, RepositoryInfo Repo, EnvironmentInfo Env)
+	{	
+		Console.WriteLine("[Common.tt] Build Information -------------------------------------------------------------");
+			// Display
+		Console.WriteLine("Version             = {0}", Version.IsValid ? Version .ToString() : "Unavailable");
+	    Console.WriteLine("Version(SemVer)     = {0}", Version.IsValid ? Version.ToSemanticVersionString() : "Unavailable");
+
+		Console.WriteLine("Build.IsAuto        = {0}", Build.IsAuto);
+		Console.WriteLine("Build.Number        = {0}", Build.Number);
+		Console.WriteLine("Build.Date          = {0}", Build.Date);
+		Console.WriteLine("Build.Machine       = {0}", Build.Machine);
+
+		Console.WriteLine("Repo.Type           = {0}", Repo.Type.ToString());
+		if(Repo.IsAvailable) {			
+			Console.WriteLine("Repo.Revision       = {0}", Repo.Revision);
+			if(Repo.Type == RepoType.Git) {
+				Console.WriteLine("Repo.GitCommit      = {0}", Repo.GitCommit);
+				Console.WriteLine("Repo.GitCommit      = {0} (shortened)", Repo.GitCommitShort);
+			}
+			Console.WriteLine("Repo.Branch         = {0}", Repo.Branch);			
+			Console.WriteLine("Repo.Tag            = {0}", Repo.Tag);
+		}
+		else {
+			Console.WriteLine("Repo                = Unavailable");
+		}
+
+		Console.WriteLine("Env.Platform        = {0}", Env.Platform);
+		Console.WriteLine("Env.XamarinAndroid  = {0}", Env.XamarinAndroidVersion);			
+		Console.WriteLine("-------------------------------------------------------------------------------------------");
+	}
+#>
+<#+
+	// ---------------------------------------------------------------------------------------------------------------------------
+    [Serializable, XmlRoot("VersionInfo")]
+	public class VersionInfo 
+	{
+		public int Major;							// Major: (Breaking change)
+		public int Minor;							// Minor: (New features, but backwards compatible.)
+		public int Patch;							// Patch: Backwards compatible bug fixes only.
+		public int? Build;							// Build: Optional BuildNumber (Fourth dotted quad)
+		public string Prerelease;					// Prerelease: Option Prerelease indicator (SemVer)
+        public override string ToString()
+        {
+        	var buildQuad = String.Empty;
+        	if(Build != null && Build.HasValue) buildQuad = "." + Build.Value;
+            return String.Format("{0}.{1:D2}.{2:D2}{3}", Major, Minor, Patch, buildQuad);
+        }
+        public string ToSemanticVersionString()
+        {
+        	var buildQuad = String.Empty;
+            var result = String.Format("{0}.{1}.{2}", Major, Minor, Patch);
+            if(!String.IsNullOrEmpty(Prerelease)) result += "-" + Prerelease;
+            return result;
+        }
+		public bool IsValid { get { return Major != 0 || Minor != 0 || Patch != 0; } }
+	}
+#>
+<#+
+	// ---------------------------------------------------------------------------------------------------------------------------
+	public enum RepoType { Unknown = -1, Git, Subversion }
+
+	public class RepositoryInfo {
+		public RepoType Type = RepoType.Unknown;
+
+		public bool   	IsAvailable = false;			// Was the Repository Available? (git or svn present)
+
+		public int    	Revision = -1;					// Revision Number (Git uses 'rev-list --count HEAD') 
+		public string	Tag = String.Empty;				// Tag if active
+		public string 	Branch = String.Empty;			// Current Branch 
+
+		public string 	GitCommit = String.Empty;		// Commit
+		public string 	GitCommitShort = String.Empty;	// Commit Shortened (truncated SHA1 to 7 chars)
+	}
+
+	public RepoType GetRepoType()
+	{
+		int exitCode;
+		string cmdResult;
+		RepoType result = RepoType.Unknown;
+
+			// Try Subversion
+		cmdResult = SvnCommand("info", out exitCode);
+		//Console.WriteLine("svncode {0} - result {1}", exitCode, cmdResult);
+		if(!String.IsNullOrEmpty(cmdResult)) {	// svn status returns nothing to stdout if not in an svn folder (also exitCode=1 if nothing, 0 if something)
+			result = RepoType.Subversion;
+		}
+
+			// Try Git
+		cmdResult = GitCommand("status", out exitCode);
+		//Console.WriteLine("gitcode {0} - result {1}", exitCode, cmdResult);
+		if(!String.IsNullOrEmpty(cmdResult)) {	// git status returns nothing to stdout if not in a git folder (also exitCode=128 if nothing, 0 if something)
+			result = RepoType.Git;
+		}
+		return result;
+	}
+
+	public string GitCommand(string iArguments)
+	{
+		int temp;
+		return GitCommand(iArguments, out temp);
+	}
+	public string GitCommand(string iArguments, out int oExitCode)
+	{
+		return RepoCommand("git", iArguments, out oExitCode);	
+	}
+	public string SvnCommand(string iArguments)
+	{
+		int temp;
+		return SvnCommand(iArguments, out temp);
+	}
+	public string SvnCommand(string iArguments, out int oExitCode)
+	{
+		return RepoCommand("svn", iArguments, out oExitCode);	
+	}
+
+	public string RepoCommand(string iCommand, string iArguments, out int oExitCode)
+	{
+		string result = String.Empty;
+		try {
+			string repoPath = iCommand;
+			if(!IsPlatformUnix()) repoPath += ".exe";
+
+			var proc = new Process();
+			proc.StartInfo.FileName = repoPath;
+			proc.StartInfo.WorkingDirectory = new FileInfo(Host.TemplateFile).Directory.FullName + "/../../..";
+			proc.StartInfo.Arguments = iArguments; 
+			proc.StartInfo.UseShellExecute = false;			
+			proc.StartInfo.CreateNoWindow = true;
+
+			proc.StartInfo.RedirectStandardOutput = true; 
+			proc.StartInfo.RedirectStandardError = true;
+
+			proc.Start();		 	
+			proc.WaitForExit();			
+
+			oExitCode = proc.ExitCode;
+			result = proc.StandardOutput.ReadToEnd().Trim();
+		}
+		catch(Exception) {			
+			oExitCode = -1;
+		}		
+
+		return result;
+	}
+
+	static public string ExtractSubversionInfoValue(string iDataLine)
+	{
+		string result = String.Empty;
+		if(!String.IsNullOrEmpty (iDataLine)) {
+			var pos = iDataLine.IndexOf(":");
+			if(pos >= 0) {
+				result = iDataLine.Substring(pos+1).Trim();
+			}
+		}
+		return result;
+	}
+
+    public const int DefaultSHA1ShortenLength = 7;
+
+	static public string ShortenSHA1(string iSHA1, int iToLength = DefaultSHA1ShortenLength)
+	{
+		if(iSHA1 != null && iSHA1.Length > iToLength) return iSHA1.Substring(0, iToLength);
+		return iSHA1;
+	}
+#>
+<#+
+	// ---------------------------------------------------------------------------------------------------------------------------
+	public class BuildInfo 
+	{
+		public bool   	IsAuto = false;				// Was this an Auto/CI build (on build machine)
+
+		public DateTime DateRaw;					// Date of build (object)
+		public string 	Date = String.Empty;		// Date of build (in Local time - format yyyyMMdd-HHmmss)
+		public string   DateUtc = String.Empty;		// Date of build (in Utc time - format yyyyMMdd-HHmmss)
+
+		public string 	Machine = String.Empty;		// Machine name that performed the build
+		public int    	Number = 0;					// Build number (from CI system)
+	}
+#>
+<#+
+	// ---------------------------------------------------------------------------------------------------------------------------
+	public class EnvironmentInfo 
+	{
+		public string Platform = String.Empty;					// Derived from Environment.OSVersion.Platform.ToString()
+
+		public string XamarinAndroidVersion = String.Empty;		// Xamarin Android Version (currently extracted from file).
+	}
+
+	/// Currently the only way to get the Xamarin Android Version is to interrogate the installation.
+	/// Luckily there is a "Version" file present in the Xamarin Android Framework install location.
+	static public string DetermineXamarinAndroidVersion()
+	{
+#if __MonoCS__
+		var path = @"/Library/Frameworks/Xamarin.Android.framework/Versions/Current";	// OSX
+#else
+		var path = (Directory.Exists(@"C:\Program Files (x86)"))
+						? @"C:\Program Files (x86)\MSBuild\Xamarin\Android"				// WIN 64bit
+						: @"C:\Program Files\MSBuild\Xamarin\Android";					// WIN 32bit
+#endif
+		string result = null;
+		if(Directory.Exists(path)) 
+			result = File.ReadAllLines(Path.Combine(path, "Version"))[0];
+
+		return result;
+	}
+
+		// Gets the current operating environment operatingsystem platform (see PlatformID).
+	static public PlatformID GetPlatformID()
+	{
+		OperatingSystem os = Environment.OSVersion;
+		return os.Platform;
+	}
+
+	static public bool IsPlatformWindows()
+	{
+		var pid = GetPlatformID();
+			// This needs to be kept up to date.
+		return (pid != PlatformID.Unix && pid != PlatformID.MacOSX && pid != PlatformID.Xbox);
+	}
+	static public bool IsPlatformUnix()
+	{
+		var pid = GetPlatformID();
+			// This needs to be kept up to date.
+		return (pid == PlatformID.Unix || pid == PlatformID.MacOSX);
+	}
+#>
+<#+
+	/// Walk up from path until we find a folder with a .sln file, looking for 'findFileName'
+	/// If found return full path to filename, otherwise return null.
+	static public string FindFileWalkingUpPathToSolution(string path, string findFileName) 
+	{
+		string result = null;
+		var walker = new DirectoryInfo(path);
+		while(walker != null) {				
+			//Console.WriteLine("Walk[{0}]", walker.FullName);
+
+				// Look for VersionInfo.xml.
+			var versionInfoFileName = Path.Combine(walker.FullName, findFileName);
+			if(File.Exists(versionInfoFileName)) {
+				//Console.WriteLine("!Found VersionInfo.xml!");
+				result = versionInfoFileName;
+				break;
+			}
+				// Stop at a Solution.
+			var solutionFiles = walker.GetFiles("*.sln");
+			if(solutionFiles.Length > 0) {
+				//Console.WriteLine("!Found Solution!");
+				break;
+			}
+			walker = Directory.GetParent(walker.FullName);
+		}
+		return result;
+	}
+#>

@@ -1,0 +1,6 @@
+/Nuget/Company.Library*
+/packages
+/Components
+/.vs
+*.userprefs
+testresult.xml
