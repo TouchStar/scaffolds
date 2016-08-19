@@ -40,5 +40,5 @@ namespace Company.Library.Build
 	}
 }  
 <#
-DisplayBuildInformation(Version, Build, Repo, Env);
+Common.DisplayBuildInformation();
 #>
