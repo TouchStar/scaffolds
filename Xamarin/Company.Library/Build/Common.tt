@@ -82,7 +82,7 @@
 			if(exitCode != 0) Repo.Branch = String.Empty;
 
 				// Git Parse Pseudo Revision
-			var revString = GitCommand("rev-list --count HEAD");			// Equivalent to SVN rev
+			var revString = GitCommand("rev-list --count HEAD");			// Equivalent to SVN rev, distance from {first} -> HEAD - (Note: Bamboo shallow clone will cause this to be 1)
 			int.TryParse(revString, out Repo.Revision);
 
 				// Git Extract Tag Information
@@ -316,7 +316,7 @@
 
 			var proc = new Process();
 			proc.StartInfo.FileName = repoPath;
-			proc.StartInfo.WorkingDirectory = new FileInfo(Host.TemplateFile).Directory.FullName + "/../../..";
+			proc.StartInfo.WorkingDirectory = new FileInfo(Host.TemplateFile).Directory.FullName;
 			proc.StartInfo.Arguments = iArguments;
 			proc.StartInfo.UseShellExecute = false;
 			proc.StartInfo.CreateNoWindow = true;
