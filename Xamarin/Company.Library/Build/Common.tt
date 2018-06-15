@@ -384,18 +384,28 @@
 	/// Luckily there is a "Version" file present in the Xamarin Android Framework install location.
 	static public string DetermineXamarinAndroidVersion()
 	{
-#if __MonoCS__
-		var path = @"/Library/Frameworks/Xamarin.Android.framework/Versions/Current";	// OSX
-#else
-		var path = (Directory.Exists(@"C:\Program Files (x86)"))
-						? @"C:\Program Files (x86)\MSBuild\Xamarin\Android"				// WIN 64bit
-						: @"C:\Program Files\MSBuild\Xamarin\Android";					// WIN 32bit
-#endif
-		string result = null;
-		if(Directory.Exists(path))
-			result = File.ReadAllLines(Path.Combine(path, "Version"))[0];
+		var paths = new List<string>();
+		var versionFileExt = "";
 
-		return result;
+#if __MonoCS__
+		paths.Add(@"/Library/Frameworks/Xamarin.Android.framework/Versions/Current");	// OSX
+#else
+		paths.AddRange(new[]															// WIN
+		{
+			@"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\Xamarin\Android",
+			@"C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\MSBuild\Xamarin\Android",
+			@"C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\Xamarin\Android",
+			@"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\Xamarin\Android",
+			@"C:\Program Files (x86)\MSBuild\Xamarin\Android",
+			@"C:\Program Files\MSBuild\Xamarin\Android"
+		});
+		versionFileExt = ".txt";
+#endif
+
+		var versionFile = paths
+			.Select(p => Path.Combine(p, "Version" + versionFileExt))
+			.FirstOrDefault(p => File.Exists(p));
+		return versionFile != null ? File.ReadAllLines(versionFile).FirstOrDefault() : null;
 	}
 
 		// Gets the current operating environment operatingsystem platform (see PlatformID).
